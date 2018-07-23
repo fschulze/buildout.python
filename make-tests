@@ -20,13 +20,17 @@ test.cfg:
 	test -e $@ || echo "$$cfg" > $@
 
 get-pip.py:
-    python -c "import urllib2; open('get-pip.py', 'wb').write(urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py').read())"
+	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 
-bin/pip: get-pip.py
-    python get-pip.py --isolated --prefix .
+virtualenv/bin/virtualenv: get-pip.py
+	python get-pip.py --isolated -I --prefix virtualenv virtualenv
+	export PYTHONPATH=$(shell ls -d $$(pwd)/virtualenv/lib/*/site-packages); env | grep PYTHON
+
+bin/pip: virtualenv/bin/virtualenv
+	export PYTHONPATH=$(shell ls -d $$(pwd)/virtualenv/lib/*/site-packages); virtualenv/bin/virtualenv .
 
 bin/buildout: bin/pip
-	bin/pip install zc.buildout==1.4.4
+	bin/pip install setuptools==33.1.1 zc.buildout==1.4.4
 
 .installed.cfg: test.cfg bin/buildout
 	bin/buildout -vc test.cfg

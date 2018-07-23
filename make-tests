@@ -19,8 +19,14 @@ all: .installed.cfg
 test.cfg:
 	test -e $@ || echo "$$cfg" > $@
 
-bin/buildout:
-	python bootstrap.py
+get-pip.py:
+    python -c "import urllib2; open('get-pip.py', 'wb').write(urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py').read())"
+
+bin/pip: get-pip.py
+    python get-pip.py --isolated --prefix .
+
+bin/buildout: bin/pip
+	bin/pip install zc.buildout==1.4.4
 
 .installed.cfg: test.cfg bin/buildout
 	bin/buildout -vc test.cfg
